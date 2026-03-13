@@ -1,13 +1,14 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert, delete
 from app.database.models.user import User
-from app.schemas.user import UserCreate
 from app.core.auth import hash_password, verify_password, create_access_token
+from app.repositories.user_repo import UserRepository
+from app.dto.user_dto import UserCreateDTO
 
 class UserService:
     @staticmethod
-    async def create_user(db: AsyncSession, user: UserCreate):
-
+    async def create_user(db: AsyncSession, user: UserCreateDTO):
+        
         stmt = insert(User).values(
             name=user.name,
             email=user.email,
@@ -38,8 +39,7 @@ class UserService:
 
     @staticmethod
     async def login_user(db: AsyncSession, email: str, password: str): 
-        result = await db.execute(select(User).where(User.email == email))
-        user = result.scalar_one_or_none()
+        user = await UserRepository.get_by_email(db, email)
 
         if not user:
             return None
