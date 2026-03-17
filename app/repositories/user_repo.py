@@ -15,3 +15,8 @@ class UserRepository:
         await db.commit()
         await db.refresh(user)
         return user
+    
+    @staticmethod
+    async def delete(db: AsyncSession, user: User):
+        db.delete(user)
+        await db.commit()

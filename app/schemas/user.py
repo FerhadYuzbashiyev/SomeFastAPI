@@ -13,6 +13,10 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+class OtpCreate(BaseModel):
+    user_id: int
+    otp_code: int
+
 class UserResponse(BaseModel):
     id: int
     name: str
