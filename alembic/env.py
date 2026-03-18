@@ -1,6 +1,6 @@
 from logging.config import fileConfig
 from app.database.base import Base
-from app.database.models import user, otp
+from app.database.models import user, otp, file, processing_task
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 

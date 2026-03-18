@@ -8,3 +8,5 @@ python-jose[cryptography]
 passlib[bcrypt]
 asyncpg
 pydantic-settings
+python-multipart
+pillow # for convertation

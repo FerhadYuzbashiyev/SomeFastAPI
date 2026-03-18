@@ -45,7 +45,7 @@ class OTPRepository:
         await db.execute(
             update(User)
             .where(User.id == user_id)
-            .values(emailVerifiedAt=datetime.utcnow())
+            .values(email_verified_at=datetime.utcnow())
         )
 
         await db.commit()
