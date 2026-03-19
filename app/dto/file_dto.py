@@ -1,9 +1,6 @@
 from dataclasses import dataclass
+from fastapi import UploadFile
 
 @dataclass
 class FileCreateDTO:
-    filename: str
-    content_type: str
-    size: int
-    path: str
-    user_id: int
+    file: UploadFile

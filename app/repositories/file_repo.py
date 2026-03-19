@@ -1,21 +1,21 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models.file import File
-from app.dto.file_dto import FileCreateDTO
+from sqlalchemy import select
 
 class FileRepository:
 
     @staticmethod
-    async def create(db: AsyncSession, dto: FileCreateDTO) -> File:
-        file = File(
-            filename=dto.filename,
-            content_type=dto.content_type,
-            size=dto.size,
-            path=dto.path,
-            user_id=dto.user_id
-        )
-
+    async def create(db: AsyncSession, file: File) -> File:
         db.add(file)
         await db.commit()
         await db.refresh(file)
 
         return file
+    
+    @staticmethod
+    async def get_file(db: AsyncSession, file_id: int) -> File:
+        stmt = select(File).where(File.id == file_id)
+        result = await db.execute(stmt)
+        file = result.scalar_one_or_none()
+        return file
+    

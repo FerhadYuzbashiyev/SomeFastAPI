@@ -1,6 +1,8 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models.processing_task import ProcessingTask, TaskStatus
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database.models.file import File
 from datetime import datetime
+from sqlalchemy import select
 
 class ProcessingTaskRepository:
 
@@ -17,7 +19,7 @@ class ProcessingTaskRepository:
         return task
     
     @staticmethod
-    async def finish_task(db: AsyncSession, task: ProcessingTask, result_path: str):
+    async def finish_task(db: AsyncSession, task: ProcessingTask, result_path: str) -> ProcessingTask:
         task.status = TaskStatus.finished
         task.result_path = result_path
         task.finished_at = datetime.utcnow()
@@ -26,3 +28,4 @@ class ProcessingTaskRepository:
         await db.refresh(task)
 
         return task
+    

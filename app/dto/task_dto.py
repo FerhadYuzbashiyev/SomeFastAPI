@@ -2,4 +2,4 @@ from dataclasses import dataclass
 
 @dataclass
 class ProcessingTaskCreateDTO:
-    file_id: int
+    target_format: str
