@@ -4,18 +4,19 @@ from sqlalchemy import select
 
 class FileRepository:
 
-    @staticmethod
-    async def create(db: AsyncSession, file: File) -> File:
-        db.add(file)
-        await db.commit()
-        await db.refresh(file)
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def create(self, file: File) -> File:
+        self.db.add(file)
+        await self.db.commit()
+        await self.db.refresh(file)
 
         return file
     
-    @staticmethod
-    async def get_file(db: AsyncSession, file_id: int) -> File:
+    async def get_file(self, file_id: int) -> File | None:
         stmt = select(File).where(File.id == file_id)
-        result = await db.execute(stmt)
+        result = await self.db.execute(stmt)
         file = result.scalar_one_or_none()
         return file
     
