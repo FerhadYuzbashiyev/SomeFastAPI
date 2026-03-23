@@ -4,19 +4,20 @@ from app.database.models.user import User
 
 class UserRepository:
 
-    @staticmethod
-    async def get_by_email(db: AsyncSession, email: str):
-        result = await db.execute(select(User).where(User.email == email))
-        return result.scalar_one_or_none()
+    def __init__(self, db: AsyncSession):
+        self.db = db
     
-    @staticmethod
-    async def create(db: AsyncSession, user: User):
-        db.add(user)
-        await db.commit()
-        await db.refresh(user)
+    async def get_by_email(self, user: User) -> User:
+        result = await self.db.execute(select(User).where(User.email == user.email))
+        user = result.scalar_one_or_none()
         return user
     
-    @staticmethod
-    async def delete(db: AsyncSession, user: User):
-        db.delete(user)
-        await db.commit()
+    async def create(self, user: User) -> User:
+        self.db.add(user)
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
+    
+    async def delete(self, user: User):
+        self.db.delete(user)
+        await self.db.commit()

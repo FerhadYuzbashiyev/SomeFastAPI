@@ -13,56 +13,61 @@ import random
 
 class UserService:
 
-    @staticmethod
-    async def create_user(db: AsyncSession, dto: UserCreateDTO):
+    def __init__(self, db: AsyncSession):
+        self.user_repo=UserRepository(db)
+        self.otp_repo=OTPRepository(db)
+
+    async def create_user(self, dto: UserCreateDTO):
         user = User(
             name=dto.name,
             email=dto.email,
             password=hash_password(dto.password),
         )
-        user = await UserRepository.create(db, user)
+        user = await self.user_repo.create(user)
 
         otp_code = random.randint(1000,9999)
 
-        await OTPRepository.create(
-            db,
-            user.id,
-            otp_code,
-            datetime.utcnow() + timedelta(minutes=5)
+        otp = OTP(
+            user_id = user.id,
+            otp_code = otp_code,
+            expires_at = datetime.utcnow() + timedelta(minutes=500)
         )
+
+        await self.otp_repo.create(otp)
 
         return {"message": "User created. OTP sent"}
 
-    @staticmethod
-    async def verify_and_get_token(db: AsyncSession, dto: OTPCreateDTO):
+    async def verify_and_get_token(self, dto: OTPCreateDTO):
 
-        otp_entity = await OTPRepository.get_otp(db, dto.user_id, dto.otp_code)
+        otp = OTP(
+            user_id = dto.user_id,
+            otp_code = dto.otp_code
+        )
+
+        otp_entity = await self.otp_repo.get_otp(otp)
         if not otp_entity:
             raise HTTPException(status_code=400, detail="Invalid or expired token")
         
-        await OTPRepository.delete_current_otp(db, otp_entity.user_id)
-        await OTPRepository.verify_user(db, otp_entity.user_id)
+        await self.otp_repo.delete_current_otp(otp_entity)
+        await self.otp_repo.verify_user(otp_entity)
         token = create_access_token({"sub": str(dto.user_id)})
 
         return token
 
-    @staticmethod
-    async def get_user(db: AsyncSession, user_id: int):
-        result = await db.execute(select(User).where(User.id == user_id))
-        return result.scalar_one_or_none()
-
-    @staticmethod
-    async def login_user(db: AsyncSession, email: str, password: str): 
-        user = await UserRepository.get_by_email(db, email)
+    async def login_user(self, email: str, password: str): 
+        user_data = User(
+            email = email,
+            password = password
+        )
+        user = await UserRepository.get_by_email(user_data)
 
         if not user:
             return None
-        if not verify_password(password, user.password):
+        if not verify_password(user_data.password, user.password):
             return None
         
         token = create_access_token({"sub": str(user.id)})
         return token
     
-    @staticmethod
-    async def delete_me(db: AsyncSession, user: User):
-        await UserRepository.delete(db, user)
+    async def delete_me(self, user: User):
+        await UserRepository.delete(user)

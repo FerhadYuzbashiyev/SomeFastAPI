@@ -6,46 +6,37 @@ from datetime import datetime
 
 class OTPRepository:
 
-    @staticmethod
-    async def create(db: AsyncSession, user_id: int, code: int, expires_at):
+    def __init__(self, db: AsyncSession):
+        self.db = db
 
-        await db.execute(
-            delete(OTP).where(OTP.user_id == user_id)
-        )
+    async def create(self, otp: OTP) -> OTP:
 
-        await db.execute(
-            insert(OTP).values(
-                user_id=user_id,
-                otp_code=code,
-                expires_at=expires_at
-            )
-        )
-        
-        await db.commit()
+        await self.db.execute(delete(OTP).where(OTP.user_id == otp.user_id))
 
-    @staticmethod
-    async def get_otp(db: AsyncSession, user_id: int, otp_code: int):
+        await self.db.add(otp)
+        await self.db.commit()
+        await self.db.refresh(otp)
+
+    async def get_otp(self, otp: OTP) -> OTP:
         stmt = select(OTP).where(
-            OTP.user_id == user_id,
-            OTP.otp_code == otp_code,
+            OTP.user_id == otp.user_id,
+            OTP.otp_code == otp.otp_code,
             OTP.expires_at > datetime.utcnow()
         )
     
-        result = await db.execute(stmt)
+        result = await self.db.execute(stmt)
         otp = result.scalar_one_or_none()
         return otp
 
-    @staticmethod
-    async def delete_current_otp(db: AsyncSession, user_id: int):
-        await db.execute(delete(OTP).where(OTP.user_id == user_id))
-        await db.commit()
+    async def delete_current_otp(self, otp: OTP) -> OTP:
+        await self.db.execute(delete(OTP).where(OTP.user_id == otp.user_id))
+        await self.db.commit()
 
-    @staticmethod
-    async def verify_user(db: AsyncSession, user_id: int):
-        await db.execute(
+    async def verify_user(self, otp: OTP) -> OTP:
+        await self.db.execute(
             update(User)
-            .where(User.id == user_id)
+            .where(User.id == otp.user_id)
             .values(email_verified_at=datetime.utcnow())
         )
 
-        await db.commit()
+        await self.db.commit()
